@@ -209,7 +209,7 @@ default_preproc(req::HTTP.Request) = nothing
 # add a multipart form handler, provide default
 struct HttpRpcServer{T,F}
     api::Channel{APIInvoker{T,F}}
-    handler::HTTP.RequestHandlerFunction
+    handler::HTTP.Handler
 end
 
 HttpRpcServer(api::APIInvoker{T,F}, preproc::Function=default_preproc) where {T,F} = HttpRpcServer([api], preproc)
@@ -220,7 +220,7 @@ function HttpRpcServer(apis::Vector{APIInvoker{T,F}}, preproc::Function=default_
     end
 
     handler_fn = (req)->JuliaWebAPI.http_handler(api, preproc, req)
-    handler = HTTP.RequestHandlerFunction(handler_fn)
+    handler = HTTP.streamhandler(handler_fn)
     HttpRpcServer{T,F}(api, handler)
 end
 
@@ -228,6 +228,6 @@ run_http(api::Union{Vector{APIInvoker{T,F}},APIInvoker{T,F}}, port::Int, preproc
 function run_http(httprpc::HttpRpcServer{T,F}, port::Int; kwargs...) where {T,F}
     @info("running HTTP RPC server...")
     HTTP.listen(ip"0.0.0.0", port; kwargs...) do req
-        HTTP.handle(httprpc.handler, req)
+        httprpc.handler(req)
     end
 end
