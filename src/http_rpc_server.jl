@@ -209,7 +209,7 @@ default_preproc(req::HTTP.Request) = nothing
 # add a multipart form handler, provide default
 struct HttpRpcServer{T,F}
     api::Channel{APIInvoker{T,F}}
-    handler::HTTP.Handler
+    handler::Function
 end
 
 HttpRpcServer(api::APIInvoker{T,F}, preproc::Function=default_preproc) where {T,F} = HttpRpcServer([api], preproc)

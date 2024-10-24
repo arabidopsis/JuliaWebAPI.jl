@@ -3,7 +3,7 @@ uuid = "480116ec-64ea-5dec-baca-db6b11e96e37"
 keywords = ["julia", "rest", "api"]
 license = "MIT"
 desc = "Julia package for deploying APIs"
-version = "0.7.0"
+version = "0.7.1"
 
 [deps]
 Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
