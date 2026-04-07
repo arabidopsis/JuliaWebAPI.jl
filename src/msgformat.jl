@@ -42,7 +42,7 @@ function data(fmt::AbstractMsgFormat, msg)
     vargs = get(msg, "vargs", Dict{Symbol,Any}())
     isa(vargs, Dict{Symbol,Any}) && (return vargs)
     dict = Dict{Symbol,Any}()
-    for (n,v) in vargs
+    for (n, v) in vargs
         dict[Symbol(n)] = v
     end
     dict
@@ -62,7 +62,7 @@ httpresponse(fmt::AbstractMsgFormat, resp) = _dict_httpresponse(resp)
 ##############################################
 function data_dict(data)
     d = Dict{Symbol,Any}()
-    for (n,v) in data
+    for (n, v) in data
         d[n] = v
     end
     d
@@ -102,13 +102,13 @@ end
 function _dict_httpresponse(resp)
     hdrs = Dict{String,String}()
     if "hdrs" in keys(resp)
-        for (k,v) in resp["hdrs"]
+        for (k, v) in resp["hdrs"]
             hdrs[k] = v
         end
     end
     data = get(resp, "data", "")
     respdata = isa(data, Array) ? convert(Array{UInt8}, data) :
-               isa(data, Dict) ? JSON.json(data) :
+               (isa(data, Dict) || isa(data, JSON.Object)) ? JSON.json(data) :
                string(data)
 
     HTTP.Response(resp["code"], hdrs; body=respdata)
