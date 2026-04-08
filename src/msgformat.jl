@@ -108,7 +108,7 @@ function _dict_httpresponse(resp)
     end
     data = get(resp, "data", "")
     respdata = isa(data, Array) ? convert(Array{UInt8}, data) :
-               (isa(data, Dict) || isa(data, JSON.Object)) ? JSON.json(data) :
+               isa(data, AbstractDict) ? JSON.json(data) :
                string(data)
 
     HTTP.Response(resp["code"], hdrs; body=respdata)
