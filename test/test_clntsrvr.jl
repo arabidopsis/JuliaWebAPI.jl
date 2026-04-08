@@ -8,7 +8,7 @@ const inline_flag = opts.can_inline == 1 ? `` : `--inline=no`
 const cov_flag = (opts.code_coverage == 1) ? `--code-coverage=user` :
                  (opts.code_coverage == 2) ? `--code-coverage=all` :
                  ``
-const startup_flag = `--startup-file=no`
+const startup_flag = `--project=.. --startup-file=no`
 
 function spawn_srvr()
     srvrscript = joinpath(dirname(@__FILE__), "srvr.jl")

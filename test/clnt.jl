@@ -12,7 +12,7 @@ using JSON
 global_logger(ConsoleLogger(stderr, Logging.Info))
 
 const NCALLS = 100
-const APIARGS = randperm(NCALLS*4)
+const APIARGS = randperm(NCALLS * 4)
 
 function printresp(apiclnt, testname, resp)
     hresp = httpresponse(apiclnt.format, resp)
@@ -35,7 +35,7 @@ function run_clnt(fmt, tport)
 
     t = time()
     for idx in 1:100
-        arg1,arg2,narg1,narg2 = APIARGS[(4*idx-3):(4*idx)]
+        arg1, arg2, narg1, narg2 = APIARGS[(4*idx-3):(4*idx)]
         resp = apicall(apiclnt, "testfn1", arg1, arg2; narg1=narg1, narg2=narg2)
         @test fnresponse(apiclnt.format, resp)["data"] == (arg1 * narg1) + (arg2 * narg2)
     end
@@ -44,7 +44,7 @@ function run_clnt(fmt, tport)
 
     t = time()
     for idx in 1:100
-        arg1,arg2,narg1,narg2 = APIARGS[(4*idx-3):(4*idx)]
+        arg1, arg2, narg1, narg2 = APIARGS[(4*idx-3):(4*idx)]
         resp = apicall(apiclnt, "testfn2", arg1, arg2; narg1=narg1, narg2=narg2)
         @test fnresponse(apiclnt.format, resp) == (arg1 * narg1) + (arg2 * narg2)
     end
@@ -103,7 +103,7 @@ function run_httpclnt()
     @test resp["code"] == 0
     @test resp["data"] == 5
 
-    respstr = String(HTTP.get("http://localhost:8888/testfn1/1/2"; query=Dict(:narg1=>3,:narg2=>4), status_exception=false).body)
+    respstr = String(HTTP.get("http://localhost:8888/testfn1/1/2"; query=Dict(:narg1 => 3, :narg2 => 4), status_exception=false).body)
     resp = JSON.parse(respstr)
     @test resp["code"] == 0
     @test resp["data"] == 11
@@ -111,14 +111,14 @@ function run_httpclnt()
     println("testing file upload...")
     filename = "a.txt"
     postdata = """------WebKitFormBoundaryIabcPsAlNKQmowCx\r\nContent-Disposition: form-data; name="filedata"; filename="a.txt"\r\nContent-Type: text/plain\r\n\r\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\n\r\n------WebKitFormBoundaryIabcPsAlNKQmowCx\r\nContent-Disposition: form-data; name="filename"\r\n\r\na.txt\r\n------WebKitFormBoundaryIabcPsAlNKQmowCx--\r\n"""
-    headers = Dict("Content-Type"=>"multipart/form-data; boundary=----WebKitFormBoundaryIabcPsAlNKQmowCx")
+    headers = Dict("Content-Type" => "multipart/form-data; boundary=----WebKitFormBoundaryIabcPsAlNKQmowCx")
     respstr = String(HTTP.post("http://localhost:8888/testFile"; headers=headers, body=postdata, status_exception=false).body)
     resp = JSON.parse(respstr)
     @test resp["code"] == 0
     @test resp["data"] == "5,446"
 
     println("testing preprocessor...")
-    resp = HTTP.get("http://localhost:8888/testfn1/1/2"; headers=Dict("juliawebapi"=>"404"), status_exception=false)
+    resp = HTTP.get("http://localhost:8888/testfn1/1/2"; headers=Dict("juliawebapi" => "404"), status_exception=false)
     @test resp.status == 404
     println("finished http rpc tests.")
 end
