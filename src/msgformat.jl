@@ -87,7 +87,7 @@ end
 function _dict_fmt(code::Int, headers::Dict{String,String}, resp, id=nothing)
     msg = Dict{String,Any}()
 
-    (id == nothing) || (msg["nid"] = id)
+    (id === nothing) || (msg["nid"] = id)
 
     if !isempty(headers)
         msg["hdrs"] = headers
