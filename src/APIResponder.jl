@@ -47,8 +47,8 @@ Register a function as API call.
 TODO: validate method belongs to module?
 """
 function register(conn::APIResponder, f::Function;
-                  resp_json::Bool=false,
-                  resp_headers::Dict=Dict{String,String}(), endpt=default_endpoint(f))
+    resp_json::Bool=false,
+    resp_headers::Dict=Dict{String,String}(), endpt=default_endpoint(f))
     @info("registering", endpt)
     conn.endpoints[endpt] = APISpec(f, resp_json, resp_headers)
     return conn # make fluent api possible
@@ -72,7 +72,7 @@ function get_resp(api::Union{Nothing,APISpec}, status::Symbol, resp=nothing)
     stresp = ((stcode != 0) && (resp === nothing)) ? string(st[3], " : ", st[2]) : resp
 
     if (api !== nothing) && api.resp_json
-        return Dict{String, Any}("code"=>stcode, "data"=>stresp)
+        return Dict{String,Any}("code"=>stcode, "data"=>stresp)
     else
         return stresp
     end
@@ -88,8 +88,8 @@ end
 
 """call the actual API method, and send the return value back as response"""
 function call_api(api::APISpec, conn::APIResponder, args, data::Dict{Symbol,Any})
-    try       
-        if !applicable(api.fn, args...) || ((api.fn === (*) || api.fn === (/) || api.fn === (\)) && all(x->isa(x,Vector), args))
+    try
+        if !applicable(api.fn, args...) || ((api.fn === (*) || api.fn === (/) || api.fn === (\)) && all(x->isa(x, Vector), args))
             narrow_args!(args)
         end
         result = dynamic_invoke(conn, api.fn, args...; data...)
@@ -136,7 +136,7 @@ function process(conn::APIResponder; async::Bool=false)
             msg = juliaformat(conn.format, recvreq(conn.transport))
 
             command = cmd(conn.format, msg)
-            @info("received", command)
+            @info("received: $(command)")
 
             if startswith(command, ':')    # is a control command
                 ctrlcmd = Symbol(command[2:end])
@@ -181,7 +181,7 @@ function _add_spec(spec::Tuple, api::APIResponder)
     register(api, fn, resp_json=resp_json, resp_headers=resp_headers, endpt=api_name)
 end
 
-function create_responder(apispecs::Array, addr, bind, nid, open=false)
+function create_responder(apispecs::Array, addr, bind, nid, open=false)::APIResponder{ZMQTransport,JSONMsgFormat}
     api = APIResponder(ZMQTransport(addr, REP, bind, Context()), JSONMsgFormat(), nid, open)
     for spec in apispecs
         _add_spec(spec, api)
