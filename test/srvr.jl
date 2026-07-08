@@ -11,6 +11,7 @@ using HTTP
 include("srvrfn.jl")
 
 const SRVR_ADDR = "tcp://127.0.0.1:9999"
+const SRVR_PORT = 8887
 const JSON_RESP_HDRS = Dict{String,String}("Content-Type" => "application/json; charset=utf-8")
 const BINARY_RESP_HDRS = Dict{String,String}("Content-Type" => "application/octet-stream")
 
@@ -19,7 +20,7 @@ function run_srvr(fmt, tport, async=false, openaccess=false)
     @info("queue is at $SRVR_ADDR")
 
     api = APIResponder(tport, fmt, nothing, openaccess)
-    @info("responding with: $api")
+    @info("responding with: $api $tport $fmt")
 
     register(api, testfn1; resp_json=true, resp_headers=JSON_RESP_HDRS)
     register(api, testfn2)
@@ -40,20 +41,20 @@ function run_httprpcsrvr(fmt, tport, async=false)
     run_srvr(fmt, tport, true, true)
     apiclnt = APIInvoker(ZMQTransport(SRVR_ADDR, REQ, false), fmt)
     if async
-        @async run_http(apiclnt, 8888, test_preproc; reuseaddr=true)
+        @async run_http(apiclnt, SRVR_PORT, test_preproc; reuseaddr=true)
     else
-        run_http(apiclnt, 8888, test_preproc; reuseaddr=true)
+        run_http(apiclnt, SRVR_PORT, test_preproc; reuseaddr=true)
     end
 end
 
 function wait_for_httpsrvr()
     while true
         try
-            sock = connect("localhost", 8888)
+            sock = connect("localhost", SRVR_PORT)
             close(sock)
             return
         catch
-            @info("waiting for httpserver to come up at port 8888...")
+            @info("waiting for httpserver to come up at port ...", SRVR_PORT)
             sleep(5)
         end
     end

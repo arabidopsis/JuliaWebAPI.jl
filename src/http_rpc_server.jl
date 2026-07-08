@@ -34,7 +34,11 @@ function http_handler(apis::Channel{APIInvoker{T,F}}, preproc::Function, req::HT
                 parts = HTTP.parse_multipart_form(req)
                 if parts !== nothing
                     for part in parts
-                        data_dict[part.name] = String(part.data)
+                        if isa(part.data, IO)
+                            data_dict[part.name] = base64encode(read(part.data))
+                        else
+                            data_dict[part.name] = String(part.data)
+                        end
                     end
                 end
 
