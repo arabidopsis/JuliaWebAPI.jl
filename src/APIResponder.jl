@@ -91,7 +91,7 @@ function task_exc_handler(ex::TaskFailedException)::String
     Base.show_task_exception(io, ex.task)
     msg = String(take!(io))
     msg = strip(split(msg, '\n'; limit=2)[1])  # only first line
-    if startswith(msg, r"(UndefVarError|UndefRefError|UndefKeywordError|MethodError|ArgumentError):")
+    if startswith(msg, r"(UndefVarError|UndefRefError|TypeError|AssertionError|UndefKeywordError|MethodError|ArgumentError):")
         ex, msg = split(msg, ":", limit=2)
         msg = strip(msg)
         return "$(ex)(\"$(msg)\")"
