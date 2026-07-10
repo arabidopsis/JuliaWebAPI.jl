@@ -101,6 +101,16 @@ function task_exc_handler(ex::TaskFailedException)::String
     return msg
 end
 
+function extract_exc(ex::String)::String
+    re = r"^(UndefVarError|UndefRefError|TypeError|AssertionError|UndefKeywordError|MethodError|ArgumentError)\(([^,]+),?.*\)"
+    m = match(re, ex)
+    if m === nothing
+        return "ErrorException(\"$(ex)\")"
+    else
+        return "$(m.captures[1])(\"$(m.captures[2])\")"
+    end
+end
+
 """call the actual API method, and send the return value back as response"""
 function call_api(api::APISpec, conn::APIResponder, args, data::Dict{Symbol,Any})
     try
@@ -111,11 +121,15 @@ function call_api(api::APISpec, conn::APIResponder, args, data::Dict{Symbol,Any}
         respond(conn, api, :success, result)
     catch ex
         @error("api_exception", exception=(ex, catch_backtrace()))
-        if isa(ex, TaskFailedException)
+        # sigh! can't import Distributed.RemoteException, because it's not in our Project.toml,
+        # so we have to check the type by name
+        if "$(typeof(ex))" === "Distributed.RemoteException"
+            respond(conn, api, :api_exception, extract_exc(string(ex.captured.ex)))
+        elseif isa(ex, TaskFailedException)
             msg = task_exc_handler(ex)
             respond(conn, api, :api_exception, msg)
         else
-            respond(conn, api, :api_exception, string(ex))
+            respond(conn, api, :api_exception, extract_exc(string(ex)))
         end
     end
 end
