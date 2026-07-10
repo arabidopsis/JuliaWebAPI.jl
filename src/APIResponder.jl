@@ -4,6 +4,11 @@ struct APISpec
     fn::Function
     resp_json::Bool
     resp_headers::Dict{String,String}
+    quiet::Bool
+end
+
+function is_quiet(api::APISpec)::Bool
+    api.quiet
 end
 
 const EndPts = Dict{String,APISpec}
@@ -48,9 +53,10 @@ TODO: validate method belongs to module?
 """
 function register(conn::APIResponder, f::Function;
     resp_json::Bool=false,
-    resp_headers::Dict=Dict{String,String}(), endpt=default_endpoint(f))
+    resp_headers::Dict=Dict{String,String}(),
+    endpt=default_endpoint(f), quiet::Bool=false)
     @info("registering", endpt)
-    conn.endpoints[endpt] = APISpec(f, resp_json, resp_headers)
+    conn.endpoints[endpt] = APISpec(f, resp_json, resp_headers, quiet)
     return conn # make fluent api possible
 end
 
@@ -88,7 +94,7 @@ end
 
 function task_exc_handler(ex::TaskFailedException)::String
     io = IOBuffer()
-    Base.show_task_exception(io, ex.task)
+    Base.show_task_exception(io, ex.task; indent=false)
     msg = String(take!(io))
     msg = strip(split(msg, '\n'; limit=2)[1])  # only first line
     if startswith(msg, r"(ErrorException|UndefVarError|UndefRefError|TypeError|AssertionError|UndefKeywordError|MethodError|ArgumentError):")
@@ -120,14 +126,15 @@ function call_api(api::APISpec, conn::APIResponder, args, data::Dict{Symbol,Any}
         result = dynamic_invoke(conn, api.fn, args...; data...)
         respond(conn, api, :success, result)
     catch ex
-        @error("api_exception", exception=(ex, catch_backtrace()))
+        if !is_quiet(api)
+            @error("api_exception", exception=(ex, catch_backtrace()))
+        end
         # Sigh! can't import Distributed.RemoteException, because it's not in our Project.toml,
         # so we have to check the type by name
-        if "$(typeof(ex))" === "Distributed.RemoteException"
+        if isa(ex, TaskFailedException)
+            respond(conn, api, :api_exception, task_exc_handler(ex))
+        elseif "$(typeof(ex))" === "Distributed.RemoteException"
             respond(conn, api, :api_exception, extract_exc(string(ex.captured.ex)))
-        elseif isa(ex, TaskFailedException)
-            msg = task_exc_handler(ex)
-            respond(conn, api, :api_exception, msg)
         else
             respond(conn, api, :api_exception, extract_exc(string(ex)))
         end
