@@ -9,13 +9,16 @@ function testfn1(arg1, arg2; narg1=1, narg2=2)
 end
 testfn2(arg1, arg2; narg1=1, narg2=2) = testfn1(arg1, arg2; narg1=narg1, narg2=narg2)
 
+const STATIC = UInt8[0x65, 0x10, 0x6d, 0x4c, 0xc5, 0x62, 0x79, 0x12, 0xf3, 0x2d]
+
 testbinary(datalen::String) = testbinary(parse(Int, datalen))
 testbinary(datalen::Int) = rand(UInt8, datalen)
+testbinary2() = STATIC
 
 testArray(x::Array{Float64,2}) = sum(x) + x[1, 2]
 
 function testFile(; filename=nothing, filedata=nothing)
-   filename = base64decode(filename)
+    filename = base64decode(filename)
     filedata = base64decode(filedata)
     #println("[", String(filename), "]")
     #println("[", String(filedata), "]")

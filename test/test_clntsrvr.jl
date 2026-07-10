@@ -26,9 +26,12 @@ end
 function test_remotesrvr()
     srvrproc = spawn_srvr()
     println("started server process, running client")
-    run_clnt(JuliaWebAPI.JSONMsgFormat(), JuliaWebAPI.ZMQTransport("127.0.0.1", 9999, ZMQ.REQ, false))
-    println("stopping server process")
-    kill_spawned_srvr(srvrproc)
+    try
+        run_clnt(JuliaWebAPI.JSONMsgFormat(), JuliaWebAPI.ZMQTransport("127.0.0.1", 9999, ZMQ.REQ, false))
+    finally
+        println("stopping server process")
+        kill_spawned_srvr(srvrproc)
+    end
 end
 
 # run tests if invoked with run flag

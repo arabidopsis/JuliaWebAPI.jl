@@ -16,7 +16,12 @@ const APIARGS = randperm(NCALLS * 4)
 
 function printresp(apiclnt, testname, resp)
     hresp = httpresponse(apiclnt.format, resp)
-    println("$(testname): $(hresp)")
+    if HTTP.hasheader(hresp.headers, "Content-Type", "application/octet-stream")
+        body = Int.(hresp.body)
+        println("$(testname): $(hresp.headers) length=$(length(body)) $(body[1:min(10,end)])...")
+    else
+        println("$(testname): $(hresp)")
+    end
 end
 
 function run_clnt(fmt, tport)
@@ -28,10 +33,15 @@ function run_clnt(fmt, tport)
     printresp(apiclnt, "testfn1", resp)
 
     resp = apicall(apiclnt, "testfn2", 1, 2, narg1=3, narg2=4)
-    printresp(apiclnt, "testfn1", resp)
+    printresp(apiclnt, "testfn2", resp)
 
     resp = apicall(apiclnt, "testbinary", 10)
     printresp(apiclnt, "testbinary", resp)
+
+    resp = apicall(apiclnt, "testbinary2")
+    printresp(apiclnt, "testbinary2", resp)
+    hresp = httpresponse(apiclnt.format, resp)
+    @test hresp.body == UInt8[0x65, 0x10, 0x6d, 0x4c, 0xc5, 0x62, 0x79, 0x12, 0xf3, 0x2d]
 
     t = time()
     for idx in 1:100
