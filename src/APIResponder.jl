@@ -91,7 +91,7 @@ function task_exc_handler(ex::TaskFailedException)::String
     Base.show_task_exception(io, ex.task)
     msg = String(take!(io))
     msg = strip(split(msg, '\n'; limit=2)[1])  # only first line
-    if startswith(msg, r"(UndefVarError|UndefRefError|TypeError|AssertionError|UndefKeywordError|MethodError|ArgumentError):")
+    if startswith(msg, r"(ErrorException|UndefVarError|UndefRefError|TypeError|AssertionError|UndefKeywordError|MethodError|ArgumentError):")
         ex, msg = split(msg, ":", limit=2)
         msg = strip(msg)
         return "$(ex)(\"$(msg)\")"
@@ -102,7 +102,7 @@ function task_exc_handler(ex::TaskFailedException)::String
 end
 
 function extract_exc(ex::String)::String
-    re = r"^(UndefVarError|UndefRefError|TypeError|AssertionError|UndefKeywordError|MethodError|ArgumentError)\(([^,]+),?.*\)"
+    re = r"^(ErrorException|UndefVarError|UndefRefError|TypeError|AssertionError|UndefKeywordError|MethodError|ArgumentError)\(([^,]+),?.*\)"
     m = match(re, ex)
     if m === nothing
         return "ErrorException(\"$(ex)\")"
@@ -121,7 +121,7 @@ function call_api(api::APISpec, conn::APIResponder, args, data::Dict{Symbol,Any}
         respond(conn, api, :success, result)
     catch ex
         @error("api_exception", exception=(ex, catch_backtrace()))
-        # sigh! can't import Distributed.RemoteException, because it's not in our Project.toml,
+        # Sigh! can't import Distributed.RemoteException, because it's not in our Project.toml,
         # so we have to check the type by name
         if "$(typeof(ex))" === "Distributed.RemoteException"
             respond(conn, api, :api_exception, extract_exc(string(ex.captured.ex)))
