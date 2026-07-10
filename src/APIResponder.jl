@@ -86,6 +86,21 @@ function dynamic_invoke(conn::APIResponder, f, args...; kwargs...)
     end
 end
 
+function task_exc_handler(ex::TaskFailedException)::String
+    io = IOBuffer()
+    Base.show_task_exception(io, ex.task)
+    msg = String(take!(io))
+    msg = strip(split(msg, '\n'; limit=2)[1])  # only first line
+    if startswith(msg, r"(UndefVarError|UndefRefError|UndefKeywordError|MethodError|ArgumentError):")
+        ex, msg = split(msg, ":", limit=2)
+        msg = strip(msg)
+        return "$(ex)(\"$(msg)\")"
+    end
+
+    msg = "ErrorException(\"$(msg)\")"
+    return msg
+end
+
 """call the actual API method, and send the return value back as response"""
 function call_api(api::APISpec, conn::APIResponder, args, data::Dict{Symbol,Any})
     try
@@ -96,7 +111,12 @@ function call_api(api::APISpec, conn::APIResponder, args, data::Dict{Symbol,Any}
         respond(conn, api, :success, result)
     catch ex
         @error("api_exception", exception=(ex, catch_backtrace()))
-        respond(conn, api, :api_exception, string(ex))
+        if isa(ex, TaskFailedException)
+            msg = task_exc_handler(ex)
+            respond(conn, api, :api_exception, msg)
+        else
+            respond(conn, api, :api_exception, string(ex))
+        end
     end
 end
 
