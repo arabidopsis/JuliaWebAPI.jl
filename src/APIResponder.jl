@@ -92,6 +92,13 @@ function dynamic_invoke(conn::APIResponder, f, args...; kwargs...)
     end
 end
 
+function _strip_quotes(s)
+    while length(s) > 1 && startswith(s, "\"") && endswith(s, "\"")
+        s = s[2:end-1]
+    end
+    return s
+end
+
 function task_exc_handler(ex::TaskFailedException)::String
     io = IOBuffer()
     Base.show_task_exception(io, ex.task; indent=false)
@@ -100,20 +107,23 @@ function task_exc_handler(ex::TaskFailedException)::String
     if startswith(msg, r"(ErrorException|UndefVarError|UndefRefError|TypeError|AssertionError|UndefKeywordError|MethodError|ArgumentError):")
         ex, msg = split(msg, ":", limit=2)
         msg = strip(msg)
+        msg = _strip_quotes(msg)
         return "$(ex)(\"$(msg)\")"
     end
-
+    msg = _strip_quotes(msg)
     msg = "ErrorException(\"$(msg)\")"
     return msg
 end
 
-function extract_exc(ex::String)::String
+function extract_exc(ex)::String
     re = r"^(ErrorException|UndefVarError|UndefRefError|TypeError|AssertionError|UndefKeywordError|MethodError|ArgumentError)\(([^,]+),?.*\)"
     m = match(re, ex)
     if m === nothing
+        ex = _strip_quotes(ex)
         return "ErrorException(\"$(ex)\")"
     else
-        return "$(m.captures[1])(\"$(m.captures[2])\")"
+        msg = _strip_quotes(m.captures[2])
+        return "$(m.captures[1])(\"$(msg)\")"
     end
 end
 
