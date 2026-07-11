@@ -94,7 +94,7 @@ end
 
 function _strip_quotes(s)
     while length(s) > 1 && startswith(s, "\"") && endswith(s, "\"")
-        s = s[2:end-1]
+        s = strip(s[2:end-1])
     end
     return s
 end
@@ -106,11 +106,10 @@ function task_exc_handler(ex::TaskFailedException)::String
     msg = strip(split(msg, '\n'; limit=2)[1])  # only first line
     if startswith(msg, r"(ErrorException|UndefVarError|UndefRefError|TypeError|AssertionError|UndefKeywordError|MethodError|ArgumentError):")
         ex, msg = split(msg, ":", limit=2)
-        msg = strip(msg)
-        msg = _strip_quotes(msg)
+        msg = _strip_quotes(strip(msg))
         return "$(ex)(\"$(msg)\")"
     end
-    msg = _strip_quotes(msg)
+    msg = _strip_quotes(strip(msg))
     msg = "ErrorException(\"$(msg)\")"
     return msg
 end
@@ -119,10 +118,10 @@ function extract_exc(ex)::String
     re = r"^(ErrorException|UndefVarError|UndefRefError|TypeError|AssertionError|UndefKeywordError|MethodError|ArgumentError)\(([^,]+),?.*\)"
     m = match(re, ex)
     if m === nothing
-        ex = _strip_quotes(ex)
+        ex = _strip_quotes(strip(ex))
         return "ErrorException(\"$(ex)\")"
     else
-        msg = _strip_quotes(m.captures[2])
+        msg = _strip_quotes(strip(m.captures[2]))
         return "$(m.captures[1])(\"$(msg)\")"
     end
 end
