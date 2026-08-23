@@ -55,7 +55,7 @@ function register(conn::APIResponder, f::Function;
     resp_json::Bool=false,
     resp_headers::Dict=Dict{String,String}(),
     endpt=default_endpoint(f), quiet::Bool=false)
-    @info("registering", endpt)
+    @info "registering: $(endpt)"
     conn.endpoints[endpt] = APISpec(f, resp_json, resp_headers, quiet)
     return conn # make fluent api possible
 end
@@ -186,7 +186,7 @@ function process(conn::APIResponder; async::Bool=false)
             msg = juliaformat(conn.format, recvreq(conn.transport))
 
             command = cmd(conn.format, msg)
-            @info("received: $(command)")
+            @info "received: $(command)"
 
             if startswith(command, ':')    # is a control command
                 ctrlcmd = Symbol(command[2:end])
@@ -216,7 +216,7 @@ function process(conn::APIResponder; async::Bool=false)
             end
         end
         close(conn.transport)
-        @info("stopped processing.")
+        @info "stopped processing."
     end
     conn
 end

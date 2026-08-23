@@ -47,7 +47,7 @@ function http_handler(apis::Channel{APIInvoker{T,F}}, preproc::Function, req::HT
                     res = HTTP.Response(404)
                 else
                     cmd = popfirst!(args)
-                    @info("waiting for a handler")
+                    @info "waiting for a handler"
                     api = take!(apis)
                     try
                         if isempty(data_dict)
@@ -97,7 +97,7 @@ end
 
 run_http(api::Union{Vector{APIInvoker{T,F}},APIInvoker{T,F}}, port::Int, preproc::Function=default_preproc; kwargs...) where {T,F} = run_http(HttpRpcServer(api, preproc), port; kwargs...)
 function run_http(httprpc::HttpRpcServer{T,F}, port::Int; kwargs...) where {T,F}
-    @info("running HTTP RPC server...")
+    @info "running HTTP RPC server..."
     HTTP.listen("127.0.0.1", port; kwargs...) do stream
         httprpc.handler(stream)
     end

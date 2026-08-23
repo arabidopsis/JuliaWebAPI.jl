@@ -17,10 +17,10 @@ const BINARY_RESP_HDRS = Dict{String,String}("Content-Type" => "application/octe
 
 function run_srvr(fmt, tport, async=false, openaccess=false)
     global_logger(SimpleLogger(open("apisrvr_test.log", "a"), Logging.Info))
-    @info("queue is at $SRVR_ADDR")
+    @info "queue is at $SRVR_ADDR"
 
     api = APIResponder(tport, fmt, nothing, openaccess)
-    @info("responding with: $api $tport $fmt")
+    @info "responding with: $api $tport $fmt"
 
     register(api, testfn1; resp_json=true, resp_headers=JSON_RESP_HDRS)
     register(api, testfn2)
@@ -55,7 +55,7 @@ function wait_for_httpsrvr()
             close(sock)
             return
         catch
-            @info("waiting for httpserver to come up at port ...", SRVR_PORT)
+            @info "waiting for httpserver to come up at port ... $SRVR_PORT"
             sleep(5)
         end
     end
